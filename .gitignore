@@ -1,0 +1,20 @@
+# Compiled binaries
+UnityMind.exe
+UnityMind_arm64.exe
+unitymind_linux_arm
+unitymind_linux_amd64
+unitymind
+
+# Generated at runtime
+cache/
+config.json
+
+# Go stuff
+*.test
+*.out
+
+# Editor
+.vscode/
+.idea/
+*.swp
+UnityDocumentation.zip

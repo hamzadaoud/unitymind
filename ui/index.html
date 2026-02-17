@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UnityMind — Unity Dev Assistant</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Sora:wght@300;400;600;700&display=swap');
+
+  :root {
+    --bg:       #0d0f14;
+    --surface:  #13161e;
+    --panel:    #1a1d27;
+    --border:   #252836;
+    --accent:   #4f86f7;
+    --accent2:  #7c5cbf;
+    --green:    #3ecf8e;
+    --yellow:   #f7c948;
+    --red:      #f76e6e;
+    --text:     #e2e6f0;
+    --muted:    #6b7280;
+    --code-bg:  #0a0c10;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── TOP BAR ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    height: 54px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    gap: 12px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+
+  .logo-icon {
+    width: 30px; height: 30px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s ease infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .btn-icon {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--muted);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    transition: all 0.15s;
+  }
+  .btn-icon:hover { background: var(--border); color: var(--text); }
+
+  /* ── LAYOUT ── */
+  .layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  aside {
+    width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 16px 12px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+  }
+
+  .sidebar-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-transform: uppercase;
+    padding: 8px 8px 4px;
+  }
+
+  .quick-btn {
+    padding: 8px 10px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.12s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .quick-btn:hover { background: var(--panel); color: var(--text); }
+  .quick-btn .q-icon { font-size: 14px; flex-shrink: 0; }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 6px 0;
+  }
+
+  /* ── MAIN CHAT AREA ── */
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  #chat-log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 0;
+    scroll-behavior: smooth;
+  }
+
+  #chat-log::-webkit-scrollbar { width: 5px; }
+  #chat-log::-webkit-scrollbar-track { background: transparent; }
+  #chat-log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── MESSAGES ── */
+  .msg {
+    display: flex;
+    gap: 14px;
+    padding: 10px 28px;
+    max-width: 860px;
+    margin: 0 auto;
+    width: 100%;
+    animation: fadeUp 0.2s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg-avatar {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    margin-top: 2px;
+  }
+
+  .msg.user .msg-avatar {
+    background: linear-gradient(135deg, var(--accent2), #5a3f8c);
+  }
+
+  .msg.bot .msg-avatar {
+    background: linear-gradient(135deg, var(--accent), #1e5cc8);
+  }
+
+  .msg-body { flex: 1; min-width: 0; }
+
+  .msg-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+  }
+
+  .msg-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .source-badge {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .src-local_docs  { background: rgba(62,207,142,0.15); color: var(--green); }
+  .src-live_docs   { background: rgba(79,134,247,0.15); color: var(--accent); }
+  .src-openai      { background: rgba(124,92,191,0.15); color: #a87cf7; }
+  .src-not_found   { background: rgba(247,110,110,0.15); color: var(--red); }
+  .src-error       { background: rgba(247,110,110,0.15); color: var(--red); }
+
+  .elapsed {
+    font-size: 10px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  .msg-content {
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--text);
+    word-break: break-word;
+  }
+
+  .msg-content code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #79d4f5;
+  }
+
+  .msg-content pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 10px 0;
+    overflow-x: auto;
+    position: relative;
+  }
+
+  .msg-content pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 13px;
+    color: #c9d1e0;
+    line-height: 1.6;
+  }
+
+  .copy-btn {
+    position: absolute;
+    top: 8px; right: 8px;
+    padding: 3px 8px;
+    font-size: 11px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'Sora', sans-serif;
+    transition: all 0.15s;
+  }
+  .copy-btn:hover { color: var(--text); background: var(--border); }
+
+  .msg-content strong { color: #fff; font-weight: 600; }
+  .msg-content h2, .msg-content h3 {
+    color: #fff;
+    margin: 14px 0 6px;
+    font-size: 15px;
+  }
+  .msg-content ul, .msg-content ol {
+    padding-left: 20px;
+    margin: 6px 0;
+  }
+  .msg-content li { margin: 3px 0; }
+  .msg-content p { margin: 6px 0; }
+
+  .doc-links {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .doc-link {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--accent);
+    text-decoration: none;
+    transition: all 0.12s;
+  }
+  .doc-link:hover { border-color: var(--accent); background: rgba(79,134,247,0.08); }
+
+  /* ── THINKING INDICATOR ── */
+  .thinking {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    font-size: 13px;
+    font-style: italic;
+  }
+  .thinking-dots span {
+    display: inline-block;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: bounce 1.2s ease infinite;
+  }
+  .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-5px); opacity: 1; }
+  }
+
+  /* ── WELCOME SCREEN ── */
+  .welcome {
+    text-align: center;
+    padding: 48px 24px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .welcome-logo {
+    width: 64px; height: 64px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    margin: 0 auto 20px;
+    box-shadow: 0 0 40px rgba(79,134,247,0.25);
+  }
+
+  .welcome h1 {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    background: linear-gradient(90deg, #fff, var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .welcome p {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 28px;
+  }
+
+  .suggestion-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    text-align: left;
+  }
+
+  .suggestion {
+    padding: 12px 14px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--muted);
+    transition: all 0.15s;
+    line-height: 1.4;
+  }
+  .suggestion:hover {
+    border-color: var(--accent);
+    color: var(--text);
+    background: rgba(79,134,247,0.06);
+  }
+  .suggestion strong {
+    display: block;
+    color: var(--text);
+    font-size: 13px;
+    margin-bottom: 2px;
+  }
+
+  /* ── INPUT BAR ── */
+  .input-area {
+    padding: 14px 24px 18px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .input-wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    transition: border-color 0.15s;
+  }
+  .input-wrap:focus-within { border-color: var(--accent); }
+
+  #user-input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    font-size: 14px;
+    resize: none;
+    max-height: 140px;
+    line-height: 1.5;
+  }
+  #user-input::placeholder { color: var(--muted); }
+
+  #send-btn {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  #send-btn:hover { background: #3a70e0; transform: scale(1.05); }
+  #send-btn:disabled { background: var(--border); cursor: not-allowed; transform: none; }
+
+  .input-hint {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+    max-width: 860px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* ── SETTINGS PANEL ── */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 100;
+    backdrop-filter: blur(3px);
+    align-items: center;
+    justify-content: center;
+  }
+  .overlay.open { display: flex; }
+
+  .settings-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 460px;
+    max-width: 95vw;
+    padding: 28px;
+    animation: scaleIn 0.2s ease;
+  }
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .settings-panel h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .settings-panel p {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 22px;
+  }
+
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+
+  .field input, .field select {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent); }
+
+  .settings-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .btn {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #3a70e0; }
+  .btn-secondary { background: var(--border); color: var(--text); }
+  .btn-secondary:hover { background: var(--muted); }
+
+  .docs-status {
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .btn-sm {
+    padding: 4px 10px;
+    font-size: 11px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--accent);
+    cursor: pointer;
+    font-family: 'Sora', sans-serif;
+    font-weight: 600;
+    transition: all 0.12s;
+  }
+  .btn-sm:hover { background: rgba(79,134,247,0.1); }
+
+  .understood-badge {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: rgba(247,201,72,0.12);
+    color: var(--yellow);
+    font-weight: 500;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">🎮</div>
+    UnityMind
+  </div>
+  <div class="header-right">
+    <div class="status-pill">
+      <div class="status-dot"></div>
+      <span id="doc-count-badge">Loading...</span>
+    </div>
+    <button class="btn-icon" title="Refresh Docs" onclick="updateDocs()">🔄</button>
+    <button class="btn-icon" title="Settings" onclick="openSettings()">⚙️</button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside>
+    <div class="sidebar-label">Quick Topics</div>
+
+    <button class="quick-btn" onclick="ask('How do I move a GameObject with Rigidbody2D?')">
+      <span class="q-icon">🏃</span> 2D Movement
+    </button>
+    <button class="quick-btn" onclick="ask('How do I detect collisions in Unity 3D?')">
+      <span class="q-icon">💥</span> 3D Collisions
+    </button>
+    <button class="quick-btn" onclick="ask('How do I use Animator and animation states?')">
+      <span class="q-icon">🎬</span> Animation
+    </button>
+    <button class="quick-btn" onclick="ask('How do I load a new scene in Unity?')">
+      <span class="q-icon">🗺️</span> Scene Loading
+    </button>
+    <button class="quick-btn" onclick="ask('How do I use the Unity Input System?')">
+      <span class="q-icon">🎮</span> Input System
+    </button>
+    <button class="quick-btn" onclick="ask('How do I create and use Prefabs?')">
+      <span class="q-icon">📦</span> Prefabs
+    </button>
+    <button class="quick-btn" onclick="ask('How do I make a UI button in Unity?')">
+      <span class="q-icon">🖱️</span> UI / Canvas
+    </button>
+    <button class="quick-btn" onclick="ask('How do I play a sound effect in Unity?')">
+      <span class="q-icon">🔊</span> Audio
+    </button>
+
+    <div class="divider"></div>
+    <div class="sidebar-label">3D</div>
+
+    <button class="quick-btn" onclick="ask('How do I set up lighting in Unity 3D?')">
+      <span class="q-icon">💡</span> Lighting
+    </button>
+    <button class="quick-btn" onclick="ask('How do I use NavMesh for AI pathfinding?')">
+      <span class="q-icon">🤖</span> NavMesh AI
+    </button>
+    <button class="quick-btn" onclick="ask('How do I create a shader in Unity?')">
+      <span class="q-icon">✨</span> Shaders
+    </button>
+
+    <div class="divider"></div>
+    <div class="sidebar-label">2D</div>
+
+    <button class="quick-btn" onclick="ask('How do I use the Tilemap system in Unity 2D?')">
+      <span class="q-icon">🧩</span> Tilemap
+    </button>
+    <button class="quick-btn" onclick="ask('How do I create sprites and sprite animations?')">
+      <span class="q-icon">🖼️</span> Sprites
+    </button>
+
+    <div class="divider"></div>
+    <div class="sidebar-label">Performance</div>
+
+    <button class="quick-btn" onclick="ask('How do I optimize my Unity game for mobile?')">
+      <span class="q-icon">📱</span> Mobile Perf
+    </button>
+    <button class="quick-btn" onclick="ask('What is object pooling and how to implement it?')">
+      <span class="q-icon">♻️</span> Object Pooling
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <main>
+    <div id="chat-log">
+      <!-- Welcome screen -->
+      <div class="welcome" id="welcome-screen">
+        <div class="welcome-logo">🎮</div>
+        <h1>UnityMind</h1>
+        <p>Your local-first Unity game development assistant.<br>
+        Searches Unity documentation instantly — uses AI only as fallback.</p>
+        <div class="suggestion-grid">
+          <div class="suggestion" onclick="ask('How do I use Coroutines in Unity?')">
+            <strong>⏱ Coroutines</strong>
+            Start, stop, and chain coroutines
+          </div>
+          <div class="suggestion" onclick="ask('How does the Unity event system work?')">
+            <strong>📡 Events & Delegates</strong>
+            UnityEvent, C# events, delegates
+          </div>
+          <div class="suggestion" onclick="ask('How do I save and load game data in Unity?')">
+            <strong>💾 Save System</strong>
+            PlayerPrefs, JSON, binary saves
+          </div>
+          <div class="suggestion" onclick="ask('How do I build my Unity game for Windows?')">
+            <strong>🏗 Build & Deploy</strong>
+            Build settings and publishing
+          </div>
+          <div class="suggestion" onclick="ask('What is the difference between Update and FixedUpdate?')">
+            <strong>🔄 Update vs FixedUpdate</strong>
+            Execution order explained
+          </div>
+          <div class="suggestion" onclick="ask('How do I use Scriptable Objects?')">
+            <strong>📋 ScriptableObjects</strong>
+            Data-driven game architecture
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INPUT -->
+    <div class="input-area">
+      <div class="input-wrap">
+        <textarea id="user-input"
+          rows="1"
+          placeholder="Ask anything about Unity 2D or 3D development..."
+          onkeydown="handleKey(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <button id="send-btn" onclick="sendMessage()" title="Send (Enter)">➤</button>
+      </div>
+      <div class="input-hint">
+        Enter to send · Shift+Enter for new line · Sources: 📄 Local Docs → 🌐 Live Docs → 🤖 AI Fallback
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- SETTINGS OVERLAY -->
+<div class="overlay" id="settings-overlay" onclick="closeSettingsIfBg(event)">
+  <div class="settings-panel">
+    <h2>⚙️ Settings</h2>
+    <p>Configure UnityMind. OpenAI key is optional — the app works great with local docs alone.</p>
+
+    <div class="field">
+      <label>OpenAI API Key (optional fallback)</label>
+      <input type="password" id="api-key-input" placeholder="sk-...  (leave blank to disable AI fallback)">
+    </div>
+
+    <div class="field">
+      <label>OpenAI Model</label>
+      <select id="model-select">
+        <option value="gpt-4o-mini">gpt-4o-mini (recommended — fast & cheap)</option>
+        <option value="gpt-3.5-turbo">gpt-3.5-turbo (fastest, lower quality)</option>
+        <option value="gpt-4o">gpt-4o (best quality, more expensive)</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>📁 Offline Docs Path (ZIP or extracted folder)</label>
+      <input type="text" id="offline-path-input"
+        placeholder="e.g. C:\Users\You\Downloads\UnityDocumentation.zip">
+      <div style="font-size:11px;color:var(--muted);margin-top:5px;">
+        💡 <strong>Easiest:</strong> put <code style="background:var(--bg);padding:1px 4px;border-radius:3px;">UnityDocumentation.zip</code> in the same folder as <code style="background:var(--bg);padding:1px 4px;border-radius:3px;">UnityMind.exe</code> and restart — it auto-detects.<br>
+        Or paste the full path here: <em>C:\Users\You\Downloads\UnityDocumentation.zip</em>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Indexing Progress</label>
+      <div class="docs-status" style="flex-direction:column;align-items:flex-start;gap:8px;">
+        <div style="display:flex;width:100%;justify-content:space-between;align-items:center;">
+          <span id="settings-doc-status">Loading...</span>
+          <button class="btn-sm" onclick="updateDocs(); closeSettings();">🌐 Refresh Live</button>
+        </div>
+        <div id="progress-wrap" style="display:none;width:100%;">
+          <div style="background:var(--border);border-radius:4px;height:6px;width:100%;overflow:hidden;">
+            <div id="progress-bar" style="height:6px;background:var(--accent);border-radius:4px;width:0%;transition:width 0.5s;"></div>
+          </div>
+          <div id="progress-label" style="font-size:11px;color:var(--muted);margin-top:4px;">Indexing...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-actions">
+      <button class="btn btn-primary" onclick="saveSettings()">Save & Apply</button>
+      <button class="btn btn-secondary" onclick="closeSettings()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──
+let history = [];
+let isWaiting = false;
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', () => {
+  loadStatus();
+});
+
+async function loadStatus() {
+  try {
+    const r = await fetch('/api/status');
+    const d = await r.json();
+    const count = d.doc_count || 0;
+    const pct = d.indexing_progress || 0;
+    const done = d.indexing_done;
+    if (!done && pct > 0) {
+      document.getElementById('doc-count-badge').textContent = `Indexing... ${pct}%`;
+      setTimeout(loadStatus, 1500);
+    } else {
+      document.getElementById('doc-count-badge').textContent =
+        count > 0 ? `${count.toLocaleString()} pages indexed` : 'Fetching docs...';
+    }
+  } catch {
+    document.getElementById('doc-count-badge').textContent = 'Offline mode';
+  }
+
+  try {
+    const r = await fetch('/api/config');
+    const d = await r.json();
+    if (d.openai_model) document.getElementById('model-select').value = d.openai_model;
+    if (d.offline_docs_path) document.getElementById('offline-path-input').value = d.offline_docs_path;
+
+    const count = d.doc_count || 0;
+    const last = d.last_doc_update || 'Never';
+    const pct = d.indexing_progress || 0;
+    const done = d.indexing_done;
+
+    document.getElementById('settings-doc-status').textContent =
+      `${count.toLocaleString()} pages · ${last}`;
+
+    const wrap = document.getElementById('progress-wrap');
+    if (!done && pct > 0 && pct < 100) {
+      wrap.style.display = 'block';
+      document.getElementById('progress-bar').style.width = pct + '%';
+      document.getElementById('progress-label').textContent = `Indexing offline docs... ${pct}%`;
+      setTimeout(loadStatus, 1500);
+    } else if (pct === 100 || done) {
+      wrap.style.display = 'none';
+    }
+  } catch {}
+}
+
+// ── Send message ──
+async function sendMessage() {
+  const input = document.getElementById('user-input');
+  const text = input.value.trim();
+  if (!text || isWaiting) return;
+
+  // Hide welcome screen
+  const welcome = document.getElementById('welcome-screen');
+  if (welcome) welcome.remove();
+
+  input.value = '';
+  input.style.height = '';
+  isWaiting = true;
+  document.getElementById('send-btn').disabled = true;
+
+  appendMsg('user', text, null, null, null);
+
+  const thinkingId = appendThinking();
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text, history })
+    });
+    const data = await res.json();
+
+    removeThinking(thinkingId);
+    appendMsg('bot', data.answer, data.source, data.links, data.elapsed, data.understood);
+
+    history.push({ role: 'user', content: text });
+    history.push({ role: 'assistant', content: data.answer });
+    if (history.length > 20) history = history.slice(-20);
+
+  } catch (err) {
+    removeThinking(thinkingId);
+    appendMsg('bot', '❌ Connection error — is UnityMind running?', 'error', null, null);
+  }
+
+  isWaiting = false;
+  document.getElementById('send-btn').disabled = false;
+  input.focus();
+}
+
+function ask(question) {
+  document.getElementById('user-input').value = question;
+  sendMessage();
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = '';
+  el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+}
+
+// ── DOM helpers ──
+function appendMsg(role, content, source, links, elapsed, understood = '') {
+  const log = document.getElementById('chat-log');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+
+  const avatarEmoji = role === 'user' ? '👤' : '🎮';
+  const name = role === 'user' ? 'You' : 'UnityMind';
+
+  let sourceBadge = '';
+  if (source && role === 'bot') {
+    const labels = {
+      local_docs: '📄 Local Docs',
+      live_docs:  '🌐 Live Docs',
+      openai:     '🤖 OpenAI',
+      not_found:  '❓ Not Found',
+      error:      '❌ Error'
+    };
+    sourceBadge = `<span class="source-badge src-${source}">${labels[source] || source}</span>`;
+  }
+
+  // NLU understood badge
+  let understoodBadge = '';
+  if (understood && role === 'bot') {
+    understoodBadge = `<span class="understood-badge" title="What I understood">🧠 ${escHtml(understood)}</span>`;
+  }
+
+  const elapsedHtml = elapsed ? `<span class="elapsed">${elapsed}</span>` : '';
+
+  let linksHtml = '';
+  if (links && links.length > 0) {
+    linksHtml = '<div class="doc-links">' +
+      links.map(l => `<a class="doc-link" href="${l.url}" target="_blank" rel="noopener">📄 ${escHtml(l.title)}</a>`).join('') +
+      '</div>';
+  }
+
+  div.innerHTML = `
+    <div class="msg-avatar">${avatarEmoji}</div>
+    <div class="msg-body">
+      <div class="msg-meta">
+        <span class="msg-name">${name}</span>
+        ${sourceBadge}
+        ${understoodBadge}
+        ${elapsedHtml}
+      </div>
+      <div class="msg-content">${renderMarkdown(content)}</div>
+      ${linksHtml}
+    </div>
+  `;
+
+  // Add copy buttons to code blocks
+  div.querySelectorAll('pre').forEach(pre => {
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.onclick = () => {
+      navigator.clipboard.writeText(pre.querySelector('code')?.textContent || pre.textContent);
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 1800);
+    };
+    pre.style.position = 'relative';
+    pre.appendChild(btn);
+  });
+
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  return div;
+}
+
+function appendThinking() {
+  const log = document.getElementById('chat-log');
+  const id = 'thinking-' + Date.now();
+  const div = document.createElement('div');
+  div.className = 'msg bot';
+  div.id = id;
+  div.innerHTML = `
+    <div class="msg-avatar">🎮</div>
+    <div class="msg-body">
+      <div class="msg-meta"><span class="msg-name">UnityMind</span></div>
+      <div class="thinking">
+        Searching docs
+        <div class="thinking-dots">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>`;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  return id;
+}
+
+function removeThinking(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+// ── Simple Markdown renderer ──
+function renderMarkdown(text) {
+  if (!text) return '';
+  let html = escHtml(text);
+
+  // Code blocks (``` ```)
+  html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+    return `<pre><code class="lang-${lang}">${code.trim()}</code></pre>`;
+  });
+
+  // Inline code
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+  // Bold
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+  // Italic
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+  // Headers
+  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+
+  // Unordered lists
+  html = html.replace(/^[*-] (.+)$/gm, '<li>$1</li>');
+  html = html.replace(/((<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
+
+  // Paragraphs (double newline)
+  html = html.replace(/\n\n/g, '</p><p>');
+  html = '<p>' + html + '</p>';
+
+  // Single newlines
+  html = html.replace(/<\/p><p>/g, '</p><p>');
+  html = html.replace(/([^>])\n([^<])/g, '$1<br>$2');
+
+  // Clean up empty paragraphs
+  html = html.replace(/<p>\s*<\/p>/g, '');
+
+  return html;
+}
+
+function escHtml(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ── Settings ──
+function openSettings() {
+  loadStatus();
+  document.getElementById('settings-overlay').classList.add('open');
+}
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('open');
+}
+function closeSettingsIfBg(e) {
+  if (e.target === document.getElementById('settings-overlay')) closeSettings();
+}
+
+async function saveSettings() {
+  const key = document.getElementById('api-key-input').value.trim();
+  const model = document.getElementById('model-select').value;
+  const offlinePath = document.getElementById('offline-path-input').value.trim();
+  await fetch('/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ openai_key: key, openai_model: model, offline_docs_path: offlinePath })
+  });
+  closeSettings();
+  // Start polling for indexing progress
+  if (offlinePath) {
+    document.getElementById('doc-count-badge').textContent = 'Indexing offline docs...';
+    setTimeout(loadStatus, 1000);
+  }
+}
+
+async function updateDocs() {
+  document.getElementById('doc-count-badge').textContent = 'Updating...';
+  try {
+    await fetch('/api/docs/update', { method: 'POST' });
+    setTimeout(loadStatus, 3000);
+    setTimeout(loadStatus, 10000);
+    setTimeout(loadStatus, 30000);
+  } catch {}
+}
+</script>
+</body>
+</html>
