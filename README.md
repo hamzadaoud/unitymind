@@ -145,7 +145,7 @@ Built with ❤️ using:
 - [Go](https://go.dev) — the language that makes this tiny and fast
 - [Unity Documentation](https://docs.unity3d.com) — the knowledge source
 - [OpenAI API](https://openai.com) — optional AI fallback
-- Claude (Anthropic) — helped design and generate this codebase
+- Claude (Anthropic) — helped in the design of the UI.
 
 ---
 
