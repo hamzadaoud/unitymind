@@ -1,4 +1,4 @@
-# 🎮 UnityMind
+# 🎮 UnityMind still in ealry dev
 
 **A local-first Unity game development assistant that runs as a single tiny executable.**
 
